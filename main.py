@@ -1,11 +1,32 @@
 import telebot
 import time
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os
 from config import TOKEN, conn
 
+# Your Telegram bot token
+
+# Initialize the Telegram bot
 bot = telebot.TeleBot(TOKEN)
 
+# Define a dictionary to store user data
 user_data = {}
 
+# Define a custom request handler for the HTTP server
+class MyServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b'Hello, World!')
+
+# Function to start the HTTP server
+def start_http_server():
+    port = int(os.getenv('PORT', 3000))
+    server = HTTPServer(('0.0.0.0', port), MyServer)
+    server.serve_forever()
+
+# Handler for the /start command
 @bot.message_handler(commands=['start'])
 def start(message):
     cht = message.chat.id
@@ -165,4 +186,12 @@ def func4(message):
         time.sleep(0.75)
         bot.send_message(cht, 'Халепа! Це не фото! Заповни заявку з почаку - /start')
 
-bot.polling()
+
+if __name__ == "__main__":
+    # Start the HTTP server in a separate thread or process
+    import threading
+    http_server_thread = threading.Thread(target=start_http_server)
+    http_server_thread.start()
+
+    # Start the Telegram bot
+    bot.polling()
